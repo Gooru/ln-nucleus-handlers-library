@@ -19,6 +19,14 @@ public final class ValidationUtils {
             || validateUuid(userId));
     }
     
+    public static boolean validateNullorEmpty(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        
+        return true;
+    }
+    
     public static boolean validateInt(String id) {
         if (id == null || id.isEmpty()) {
             return false;

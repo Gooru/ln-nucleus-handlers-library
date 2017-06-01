@@ -25,14 +25,21 @@ public class AJEntityLibrary extends Model {
     public static final String RUBRIC_COUNT = "rubric_count";
     public static final String SEQUENCE_ID = "sequence_id";
     public static final String TAXONOMY = "taxonomy";
-    
+
     public static final String RESP_KEY_LIBRARIES = "libraries";
 
     public static final String SELECT_LIBRARIES_BY_TENANTS =
         "SELECT id, name, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count, question_count,"
             + " rubric_count, sequence_id, taxonomy FROM library where tenant = ANY(?::uuid[]) order by tenant, sequence_id";
 
+    public static final String SELECT_LIBRARIES_BY_ID_NAME =
+        "SELECT id, name, thumbnail FROM library WHERE id = ? OR name = ?";
+
+    public static final String SELECT_LIBRARIES_BY_NAME = "SELECT id, name, thumbnail FROM library WHERE name = ?";
+
     public static final List<String> LIBRARIES_FIELDS =
         Arrays.asList(ID, NAME, THUMBNAIL, TENANT, TENANT_ROOT, COURSE_COUNT, ASSESSMENT_COUNT, COLLECTION_COUNT,
             RESOURCE_COUNT, QUESTION_COUNT, RUBRIC_COUNT, SEQUENCE_ID, TAXONOMY);
+    
+    public static final List<String> LIBRARY_SUMMARY_FIELDS = Arrays.asList(ID, NAME, THUMBNAIL);
 }

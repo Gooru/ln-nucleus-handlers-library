@@ -30,7 +30,7 @@ public class LibraryContentsGetProcessor extends AbstractCommandProcessor {
 
     @Override
     protected MessageResponse processCommand() {
-        if (!ValidationUtils.validateInt(context.libraryId())) {
+        if (!ValidationUtils.validateNullorEmpty(context.libraryId())) {
             LOGGER.warn("invalid library id passed");
             return MessageResponseFactory.createInternalErrorResponse(MESSAGES.getString("invalid.libraryid"));
         }

@@ -1,15 +1,20 @@
 package org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.dbhandlers;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.libraries.constants.CommonConstants;
+import org.gooru.nucleus.handlers.libraries.constants.MessageConstants;
 import org.gooru.nucleus.handlers.libraries.processors.ProcessorContext;
+import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.dbhelpers.FetchContentDetailsHelper;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.entities.AJEntityLibrary;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.entities.AJEntityLibraryContent;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.formatter.JsonFormatterBuilder;
 import org.gooru.nucleus.handlers.libraries.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponseFactory;
+import org.gooru.nucleus.handlers.libraries.processors.utils.CommonUtils;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +31,11 @@ public class GetLiraryContentsHandler implements DBHandler {
     private static final ResourceBundle MESSAGES = ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
 
     private final ProcessorContext context;
-    private int libraryId;
+    private String contentType;
+    private int limit;
+    private int offset;
     private LazyList<AJEntityLibraryContent> libraryContents;
+    private AJEntityLibrary library;
 
     public GetLiraryContentsHandler(ProcessorContext context) {
         this.context = context;
@@ -43,14 +51,16 @@ public class GetLiraryContentsHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        try {
-            this.libraryId = Integer.parseInt(context.libraryId());
-        } catch (NumberFormatException nfe) {
-            LOGGER.warn("library id is not integer");
+        this.contentType = CommonUtils.readRequestParam(AJEntityLibraryContent.PARAM_CONTENT_TYPE, context);
+        if (this.contentType == null || !AJEntityLibraryContent.VALID_CONTENT_TYPES.contains(contentType)) {
+            LOGGER.warn("invalid content type provided");
             return new ExecutionResult<>(
-                MessageResponseFactory.createInvalidRequestResponse(MESSAGES.getString("invalid.libraryid")),
+                MessageResponseFactory.createInvalidRequestResponse(MESSAGES.getString("invalid.content.type")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
+
+        this.limit = CommonUtils.getLimitFromRequest(context);
+        this.offset = CommonUtils.getOffsetFromRequest(context);
 
         LOGGER.debug("checkSanity() OK");
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -58,17 +68,43 @@ public class GetLiraryContentsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
-        // check for library existence
-        AJEntityLibrary library = AJEntityLibrary.findById(this.libraryId);
-        if (library == null) {
-            LOGGER.warn("library not found for id '{}'", this.libraryId);
+
+        // If library id is convertible in int then lookup for the library by id
+        // and name. There is possibility that library name could be the number
+        // If library id is not convertible in int then only look for the
+        // library by name.
+
+        // TODO: Need to handle the situation where id and name could be same
+        // for two different libraries
+        boolean isIntConvertible = false;
+        int intLibraryId = 0;
+        try {
+            intLibraryId = Integer.parseInt(context.libraryId());
+            isIntConvertible = true;
+        } catch (NumberFormatException nfe) {
+            isIntConvertible = false;
+        }
+
+        LazyList<AJEntityLibrary> libraries = null;
+        if (isIntConvertible) {
+            libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_NAME, intLibraryId,
+                context.libraryId());
+        } else {
+            libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_NAME, context.libraryId());
+        }
+
+        if (libraries.isEmpty()) {
+            LOGGER.warn("library not found for id '{}'", context.libraryId());
             return new ExecutionResult<MessageResponse>(
                 MessageResponseFactory.createNotFoundResponse(MESSAGES.getString("not.found")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        this.libraryContents =
-            AJEntityLibraryContent.findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS, this.libraryId);
+        this.library = libraries.get(0);
+        int libraryId = this.library.getInteger(AJEntityLibrary.ID);
+
+        this.libraryContents = AJEntityLibraryContent.findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS,
+            libraryId, contentType, this.limit, this.offset);
 
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -76,11 +112,19 @@ public class GetLiraryContentsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        JsonArray libraryContentArray = new JsonArray(new JsonFormatterBuilder().buildSimpleJsonFormatter(false, AJEntityLibraryContent.LIBRARY_CONTENTS_FIELDS)
-            .toJson(this.libraryContents));
-        
+        JsonObject libraryJson = new JsonObject(new JsonFormatterBuilder()
+            .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARY_SUMMARY_FIELDS).toJson(this.library));
+
+        List<String> contentIds = new ArrayList<>(this.libraryContents.size());
+        for (AJEntityLibraryContent content : this.libraryContents) {
+            contentIds.add(content.getString(AJEntityLibraryContent.CONTENT_ID));
+        }
+
+        JsonObject contents = FetchContentDetailsHelper.fetchContentDetails(this.contentType, contentIds);
+        contents.put(CommonConstants.RESP_KEY_LIBRARY, libraryJson);
+
         JsonObject response = new JsonObject();
-        response.put(AJEntityLibraryContent.RESP_KEY_LIBRARY_CONTENTS, libraryContentArray);
+        response.put(CommonConstants.RESP_KEY_LIBRARY_CONTENTS, contents);
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
