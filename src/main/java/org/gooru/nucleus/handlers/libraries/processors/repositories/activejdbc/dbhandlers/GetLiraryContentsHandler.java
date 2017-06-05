@@ -51,12 +51,10 @@ public class GetLiraryContentsHandler implements DBHandler {
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
-        this.contentType = CommonUtils.readRequestParam(AJEntityLibraryContent.PARAM_CONTENT_TYPE, context);
+        this.contentType = CommonUtils.readRequestParam(CommonConstants.REQ_PARAM_CONTENT_TYPE, context);
         if (this.contentType == null || !AJEntityLibraryContent.VALID_CONTENT_TYPES.contains(contentType)) {
-            LOGGER.warn("invalid content type provided");
-            return new ExecutionResult<>(
-                MessageResponseFactory.createInvalidRequestResponse(MESSAGES.getString("invalid.content.type")),
-                ExecutionResult.ExecutionStatus.FAILED);
+            LOGGER.warn("invalid content type provided, setting default");
+            this.contentType = AJEntityLibraryContent.CONTENT_TYPE_COURSE;
         }
 
         this.limit = CommonUtils.getLimitFromRequest(context);
@@ -101,10 +99,6 @@ public class GetLiraryContentsHandler implements DBHandler {
         }
 
         this.library = libraries.get(0);
-        int libraryId = this.library.getInteger(AJEntityLibrary.ID);
-
-        this.libraryContents = AJEntityLibraryContent.findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS,
-            libraryId, contentType, this.limit, this.offset);
 
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
@@ -112,19 +106,15 @@ public class GetLiraryContentsHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
+        JsonObject response = new JsonObject();
         JsonObject libraryJson = new JsonObject(new JsonFormatterBuilder()
             .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARY_SUMMARY_FIELDS).toJson(this.library));
-
-        List<String> contentIds = new ArrayList<>(this.libraryContents.size());
-        for (AJEntityLibraryContent content : this.libraryContents) {
-            contentIds.add(content.getString(AJEntityLibraryContent.CONTENT_ID));
-        }
-
-        JsonObject contents = FetchContentDetailsHelper.fetchContentDetails(this.contentType, contentIds);
-        contents.put(CommonConstants.RESP_KEY_LIBRARY, libraryJson);
-
-        JsonObject response = new JsonObject();
-        response.put(CommonConstants.RESP_KEY_LIBRARY_CONTENTS, contents);
+        response.put(CommonConstants.RESP_JSON_KEY_LIBRARY, libraryJson);
+        
+        response.mergeIn(FetchContentDetailsHelper.fetchContentDetails(this.contentType,
+            this.library.getInteger(AJEntityLibrary.ID), this.limit, this.offset));
+        //response.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, libraryContentsJson);
+        response.put(CommonConstants.RESP_JSON_KEY_FILTERS, getFiltersJson());
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
@@ -134,4 +124,10 @@ public class GetLiraryContentsHandler implements DBHandler {
         return true;
     }
 
+    private JsonObject getFiltersJson() {
+        JsonObject filters = new JsonObject();
+        filters.put(CommonConstants.REQ_PARAM_CONTENT_TYPE, this.contentType)
+            .put(CommonConstants.REQ_PARAM_LIMIT, this.limit).put(CommonConstants.REQ_PARAM_OFFSET, this.offset);
+        return filters;
+    }
 }

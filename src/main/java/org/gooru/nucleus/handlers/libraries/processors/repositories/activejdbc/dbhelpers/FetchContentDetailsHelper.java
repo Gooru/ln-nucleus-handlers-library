@@ -35,33 +35,63 @@ public final class FetchContentDetailsHelper {
         throw new AssertionError();
     }
 
-    public static JsonObject fetchContentDetails(String contentType, List<String> contentIds) {
-        JsonObject result = new JsonObject();
+    public static JsonObject fetchContentDetails(String contentType, int libraryId, int limit, int offset) {
+        JsonObject libraryContents = new JsonObject();
         switch (contentType) {
         case AJEntityLibraryContent.CONTENT_TYPE_COURSE:
-            result = fetchCoursesDetails(contentIds);
+            List<String> courseIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_COURSE, libraryId, limit, offset);
+            libraryContents = fetchCoursesDetails(courseIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_COLLECTION:
-            result = fetchCollectionsDetails(contentIds);
+            List<String> collectionIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_COLLECTION, libraryId, limit, offset);
+            libraryContents = fetchCollectionsDetails(collectionIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT:
-            result = fetchAssessmentsDetails(contentIds);
+            List<String> assessmentIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT, libraryId, limit, offset);
+            libraryContents = fetchAssessmentsDetails(assessmentIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_RESOURCE:
-            result = fetchResourcesDetails(contentIds);
+            List<String> resourceIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_RESOURCE, libraryId, limit, offset);
+            libraryContents = fetchResourcesDetails(resourceIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_QUESTION:
-            result = fetchQuestionsDetails(contentIds);
+            List<String> questionIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_QUESTION, libraryId, limit, offset);
+            libraryContents = fetchQuestionsDetails(questionIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_RUBRIC:
-            result = fetchRubricsDetails(contentIds);
+            List<String> rubricIds =
+                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC, libraryId, limit, offset);
+            libraryContents = fetchRubricsDetails(rubricIds);
             break;
+        case AJEntityLibraryContent.CONTENT_TYPE_ALL:
+            JsonArray resultArray = fetchAllContentDetails(libraryId, limit, offset);
+            libraryContents.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, resultArray);
+            return libraryContents;
         }
-
+        
+        JsonObject result = new JsonObject();
+        result.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, libraryContents);
         return result;
     }
 
+    private static List<String> getContentsForLirary(String contentType, int libraryId, int limit, int offset) {
+        LazyList<AJEntityLibraryContent> libraryContents = AJEntityLibraryContent.findBySQL(
+            AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS_BY_CONTENTTYPE, libraryId, contentType, limit, offset);
+
+        List<String> contentIds = new ArrayList<>(libraryContents.size());
+        for (AJEntityLibraryContent content : libraryContents) {
+            contentIds.add(content.getString(AJEntityLibraryContent.CONTENT_ID));
+        }
+        return contentIds;
+    }
+
     private static JsonObject fetchCoursesDetails(List<String> courseIds) {
+
         LazyList<AJEntityCourse> courses =
             AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSES, CommonUtils.toPostgresArrayString(courseIds));
         Set<String> ownerIdList = new HashSet<>();
@@ -93,9 +123,10 @@ public final class FetchContentDetailsHelper {
         return responseBody;
     }
 
-    private static JsonObject fetchCollectionsDetails(List<String> contentIds) {
+    private static JsonObject fetchCollectionsDetails(List<String> collectionIds) {
+
         LazyList<AJEntityCollection> collections = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_COLLECTIONS,
-            CommonUtils.toPostgresArrayString(contentIds));
+            CommonUtils.toPostgresArrayString(collectionIds));
         JsonArray collectionArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!collections.isEmpty()) {
@@ -164,9 +195,10 @@ public final class FetchContentDetailsHelper {
         return responseBody;
     }
 
-    private static JsonObject fetchAssessmentsDetails(List<String> contentIds) {
+    private static JsonObject fetchAssessmentsDetails(List<String> assessmentIds) {
+
         LazyList<AJEntityCollection> assessments = AJEntityCollection.findBySQL(AJEntityCollection.SELECT_ASSESSMENTS,
-            CommonUtils.toPostgresArrayString(contentIds));
+            CommonUtils.toPostgresArrayString(assessmentIds));
         JsonArray collectionArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!assessments.isEmpty()) {
@@ -223,9 +255,10 @@ public final class FetchContentDetailsHelper {
         return responseBody;
     }
 
-    private static JsonObject fetchResourcesDetails(List<String> contentIds) {
+    private static JsonObject fetchResourcesDetails(List<String> resourceIds) {
+
         LazyList<AJEntityOriginalResource> resourceList = AJEntityOriginalResource
-            .findBySQL(AJEntityOriginalResource.SELECT_RESOURCES, CommonUtils.toPostgresArrayString(contentIds));
+            .findBySQL(AJEntityOriginalResource.SELECT_RESOURCES, CommonUtils.toPostgresArrayString(resourceIds));
         JsonArray resourceArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!resourceList.isEmpty()) {
@@ -249,9 +282,10 @@ public final class FetchContentDetailsHelper {
         return responseBody;
     }
 
-    private static JsonObject fetchQuestionsDetails(List<String> contentIds) {
+    private static JsonObject fetchQuestionsDetails(List<String> questionIds) {
+
         LazyList<AJEntityContent> questionList =
-            AJEntityContent.findBySQL(AJEntityContent.SELECT_QUESTIONS, CommonUtils.toPostgresArrayString(contentIds));
+            AJEntityContent.findBySQL(AJEntityContent.SELECT_QUESTIONS, CommonUtils.toPostgresArrayString(questionIds));
         JsonArray questionArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!questionList.isEmpty()) {
@@ -295,9 +329,10 @@ public final class FetchContentDetailsHelper {
         return responseBody;
     }
 
-    private static JsonObject fetchRubricsDetails(List<String> contentIds) {
+    private static JsonObject fetchRubricsDetails(List<String> rubricIds) {
+
         LazyList<AJEntityRubric> rubricList =
-            AJEntityRubric.findBySQL(AJEntityRubric.SELECT_RUBRICS, CommonUtils.toPostgresArrayString(contentIds));
+            AJEntityRubric.findBySQL(AJEntityRubric.SELECT_RUBRICS, CommonUtils.toPostgresArrayString(rubricIds));
         JsonArray rubricArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!rubricList.isEmpty()) {
@@ -315,5 +350,63 @@ public final class FetchContentDetailsHelper {
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
             FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
+    }
+
+    private static JsonArray fetchAllContentDetails(int libraryId, int limit, int offset) {
+        //TODO: How to order these results?
+        LazyList<AJEntityLibraryContent> libraryContents = AJEntityLibraryContent
+            .findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS_ALL, libraryId, limit, offset);
+
+        List<String> courseIds = new ArrayList<>();
+        List<String> collectionIds = new ArrayList<>();
+        List<String> assessmentIds = new ArrayList<>();
+        List<String> resourceIds = new ArrayList<>();
+        List<String> questionIds = new ArrayList<>();
+        List<String> rubricIds = new ArrayList<>();
+
+        for (AJEntityLibraryContent content : libraryContents) {
+            String contentId = content.getString(AJEntityLibraryContent.CONTENT_ID);
+            if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_COURSE)) {
+                courseIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_COLLECTION)) {
+                collectionIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT)) {
+                assessmentIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_RESOURCE)) {
+                resourceIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_QUESTION)) {
+                questionIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC)) {
+                rubricIds.add(contentId);
+            }
+        }
+
+        JsonObject result = new JsonObject();
+        JsonArray libraryContentsArray = new JsonArray();
+        if (!courseIds.isEmpty()) {
+            libraryContentsArray.add(fetchCoursesDetails(courseIds));
+        }
+
+        if (!collectionIds.isEmpty()) {
+            libraryContentsArray.add(fetchCollectionsDetails(collectionIds));
+        }
+
+        if (!assessmentIds.isEmpty()) {
+            libraryContentsArray.add(fetchAssessmentsDetails(assessmentIds));
+        }
+
+        if (!resourceIds.isEmpty()) {
+            libraryContentsArray.add(fetchResourcesDetails(resourceIds));
+        }
+
+        if (!questionIds.isEmpty()) {
+            libraryContentsArray.add(fetchQuestionsDetails(questionIds));
+        }
+
+        if (!rubricIds.isEmpty()) {
+            libraryContentsArray.add(fetchRubricsDetails(rubricIds));
+        }
+
+        return libraryContentsArray;
     }
 }
