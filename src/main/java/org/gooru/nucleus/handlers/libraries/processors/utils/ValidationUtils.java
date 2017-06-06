@@ -18,15 +18,11 @@ public final class ValidationUtils {
         return !(userId == null || userId.isEmpty()) && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)
             || validateUuid(userId));
     }
-    
-    public static boolean validateNullorEmpty(String value) {
-        if (value == null || value.isEmpty()) {
-            return false;
-        }
-        
-        return true;
+
+    public static boolean validateNullOrEmpty(String value) {
+        return !(value == null || value.isEmpty());
     }
-    
+
     public static boolean validateInt(String id) {
         if (id == null || id.isEmpty()) {
             return false;
@@ -47,8 +43,6 @@ public final class ValidationUtils {
         try {
             UUID.fromString(uuidString);
             return true;
-        } catch (IllegalArgumentException e) {
-            return false;
         } catch (Exception e) {
             return false;
         }

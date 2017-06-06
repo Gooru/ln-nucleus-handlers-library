@@ -1,9 +1,6 @@
 package org.gooru.nucleus.handlers.libraries.app.components;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
@@ -27,7 +24,7 @@ public final class DataSourceRegistry implements Initializer, Finalizer {
     // All the elements in this array are supposed to be present in config file
     // as keys as we are going to initialize them with the value associated with
     // that key
-    private final List<String> datasources = Arrays.asList(DEFAULT_DATA_SOURCE);
+    private final List<String> datasources = Collections.singletonList(DEFAULT_DATA_SOURCE);
     private final Map<String, DataSource> registry = new HashMap<>();
     private volatile boolean initialized = false;
 

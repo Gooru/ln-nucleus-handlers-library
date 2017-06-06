@@ -43,7 +43,7 @@ public enum CommandProcessorBuilder {
             return new LibraryContentsGetProcessor(context);
         }
     };
-    
+
     private String name;
 
     CommandProcessorBuilder(String name) {
@@ -58,7 +58,7 @@ public enum CommandProcessorBuilder {
 
     static {
         for (CommandProcessorBuilder builder : values()) {
-            LOOKUP.put(builder.getName(), builder);
+            LOOKUP.put(builder.name, builder);
         }
     }
 

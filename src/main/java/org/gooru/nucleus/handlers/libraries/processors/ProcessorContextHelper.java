@@ -7,9 +7,9 @@ import org.gooru.nucleus.handlers.libraries.constants.MessageConstants;
 /**
  * Created by ashish on 20/3/16.
  */
-public final class ProcessorContextHelper {
+final class ProcessorContextHelper {
 
-    public static boolean validateUser(String userId) {
+    static boolean validateUser(String userId) {
         return !(userId == null || userId.isEmpty())
             && (userId.equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS) || validateId(userId));
     }
@@ -26,8 +26,6 @@ public final class ProcessorContextHelper {
         try {
             UUID.fromString(uuidString);
             return true;
-        } catch (IllegalArgumentException e) {
-            return false;
         } catch (Exception e) {
             return false;
         }

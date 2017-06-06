@@ -22,15 +22,15 @@ import io.vertx.core.json.JsonObject;
 /**
  * @author szgooru Created On: 26-May-2017
  */
-public class GetLibrariesHandler implements DBHandler {
+class GetLibrariesHandler implements DBHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GetLibrariesHandler.class);
 
     private final ProcessorContext context;
-    boolean isAnonymous = false;
-    LazyList<AJEntityLibrary> libraries;
+    private boolean isAnonymous = false;
+    private LazyList<AJEntityLibrary> libraries;
 
-    public GetLibrariesHandler(ProcessorContext context) {
+    GetLibrariesHandler(ProcessorContext context) {
         this.context = context;
     }
 
@@ -58,16 +58,14 @@ public class GetLibrariesHandler implements DBHandler {
         }
 
         List<String> tenantList = new ArrayList<>(tenants.size());
-        tenants.forEach(tenant -> {
-            tenantList.add(tenant.getString(AJEntityTenant.ID));
-        });
+        tenants.forEach(tenant -> tenantList.add(tenant.getString(AJEntityTenant.ID)));
 
-        // If logged in user, add current tenant as well 
+        // If logged in user, add current tenant as well
         if (!isAnonymous) {
             tenantList.add(context.tenant());
         }
 
-        // Get libraries for all tanants from above list
+        // Get libraries for all tenants from above list
         this.libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_TENANTS,
             CommonUtils.toPostgresArrayString(tenantList));
 
@@ -77,7 +75,7 @@ public class GetLibrariesHandler implements DBHandler {
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
-        JsonArray librariesArray = new JsonArray(new JsonFormatterBuilder()
+        JsonArray librariesArray = new JsonArray(JsonFormatterBuilder
             .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARIES_FIELDS).toJson(this.libraries));
 
         JsonObject response = new JsonObject();

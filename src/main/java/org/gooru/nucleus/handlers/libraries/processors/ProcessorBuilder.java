@@ -5,7 +5,7 @@ import io.vertx.core.eventbus.Message;
 /**
  * @author szgooru Created On: 26-May-2017
  */
-public class ProcessorBuilder {
+public final class ProcessorBuilder {
     private ProcessorBuilder() {
         throw new AssertionError();
     }

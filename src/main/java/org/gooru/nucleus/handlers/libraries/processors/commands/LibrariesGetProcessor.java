@@ -7,9 +7,9 @@ import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponse
 /**
  * @author szgooru Created On: 26-May-2017
  */
-public class LibrariesGetProcessor extends AbstractCommandProcessor {
+class LibrariesGetProcessor extends AbstractCommandProcessor {
 
-    protected LibrariesGetProcessor(ProcessorContext context) {
+    LibrariesGetProcessor(ProcessorContext context) {
         super(context);
     }
 
