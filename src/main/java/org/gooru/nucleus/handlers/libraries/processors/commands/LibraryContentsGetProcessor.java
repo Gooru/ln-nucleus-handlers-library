@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory;
 /**
  * @author szgooru Created On: 26-May-2017
  */
-public class LibraryContentsGetProcessor extends AbstractCommandProcessor {
+class LibraryContentsGetProcessor extends AbstractCommandProcessor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryContentsGetProcessor.class);
     private static final ResourceBundle MESSAGES = ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
 
-    protected LibraryContentsGetProcessor(ProcessorContext context) {
+    LibraryContentsGetProcessor(ProcessorContext context) {
         super(context);
     }
 
@@ -30,7 +30,7 @@ public class LibraryContentsGetProcessor extends AbstractCommandProcessor {
 
     @Override
     protected MessageResponse processCommand() {
-        if (!ValidationUtils.validateNullorEmpty(context.libraryId())) {
+        if (!ValidationUtils.validateNullOrEmpty(context.libraryId())) {
             LOGGER.warn("invalid library id passed");
             return MessageResponseFactory.createInternalErrorResponse(MESSAGES.getString("invalid.libraryid"));
         }

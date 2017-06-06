@@ -1,11 +1,8 @@
 package org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.dbhandlers;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import org.gooru.nucleus.handlers.libraries.constants.CommonConstants;
-import org.gooru.nucleus.handlers.libraries.constants.MessageConstants;
 import org.gooru.nucleus.handlers.libraries.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.dbhelpers.FetchContentDetailsHelper;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.entities.AJEntityLibrary;
@@ -19,15 +16,14 @@ import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
  * @author szgooru Created On: 26-May-2017
  */
-public class GetLiraryContentsHandler implements DBHandler {
+public class GetLibraryContentsHandler implements DBHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GetLiraryContentsHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GetLibraryContentsHandler.class);
     private static final ResourceBundle MESSAGES = ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
 
     private final ProcessorContext context;
@@ -37,7 +33,7 @@ public class GetLiraryContentsHandler implements DBHandler {
     private LazyList<AJEntityLibraryContent> libraryContents;
     private AJEntityLibrary library;
 
-    public GetLiraryContentsHandler(ProcessorContext context) {
+    public GetLibraryContentsHandler(ProcessorContext context) {
         this.context = context;
     }
 
@@ -93,8 +89,7 @@ public class GetLiraryContentsHandler implements DBHandler {
 
         if (libraries.isEmpty()) {
             LOGGER.warn("library not found for id '{}'", context.libraryId());
-            return new ExecutionResult<MessageResponse>(
-                MessageResponseFactory.createNotFoundResponse(MESSAGES.getString("not.found")),
+            return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(MESSAGES.getString("not.found")),
                 ExecutionResult.ExecutionStatus.FAILED);
         }
 
@@ -107,10 +102,10 @@ public class GetLiraryContentsHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         JsonObject response = new JsonObject();
-        JsonObject libraryJson = new JsonObject(new JsonFormatterBuilder()
+        JsonObject libraryJson = new JsonObject(JsonFormatterBuilder
             .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARY_SUMMARY_FIELDS).toJson(this.library));
         response.put(CommonConstants.RESP_JSON_KEY_LIBRARY, libraryJson);
-        
+
         response.mergeIn(FetchContentDetailsHelper.fetchContentDetails(this.contentType,
             this.library.getInteger(AJEntityLibrary.ID), this.limit, this.offset));
         //response.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, libraryContentsJson);

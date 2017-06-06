@@ -19,7 +19,7 @@ public class AJLibraryContentsRepo implements LibraryContentsRepo {
 
     @Override
     public MessageResponse getLibraryContents() {
-        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetLiraryContentsHandler(context));
+        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetLibraryContentsHandler(context));
     }
 
 }

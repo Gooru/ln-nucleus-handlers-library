@@ -40,32 +40,32 @@ public final class FetchContentDetailsHelper {
         switch (contentType) {
         case AJEntityLibraryContent.CONTENT_TYPE_COURSE:
             List<String> courseIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_COURSE, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_COURSE, libraryId, limit, offset);
             libraryContents = fetchCoursesDetails(courseIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_COLLECTION:
             List<String> collectionIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_COLLECTION, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_COLLECTION, libraryId, limit, offset);
             libraryContents = fetchCollectionsDetails(collectionIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT:
             List<String> assessmentIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_ASSESSMENT, libraryId, limit, offset);
             libraryContents = fetchAssessmentsDetails(assessmentIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_RESOURCE:
             List<String> resourceIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_RESOURCE, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_RESOURCE, libraryId, limit, offset);
             libraryContents = fetchResourcesDetails(resourceIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_QUESTION:
             List<String> questionIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_QUESTION, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_QUESTION, libraryId, limit, offset);
             libraryContents = fetchQuestionsDetails(questionIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_RUBRIC:
             List<String> rubricIds =
-                getContentsForLirary(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC, libraryId, limit, offset);
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC, libraryId, limit, offset);
             libraryContents = fetchRubricsDetails(rubricIds);
             break;
         case AJEntityLibraryContent.CONTENT_TYPE_ALL:
@@ -73,15 +73,15 @@ public final class FetchContentDetailsHelper {
             libraryContents.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, resultArray);
             return libraryContents;
         }
-        
+
         JsonObject result = new JsonObject();
         result.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, libraryContents);
         return result;
     }
 
-    private static List<String> getContentsForLirary(String contentType, int libraryId, int limit, int offset) {
+    private static List<String> getContentsForLibrary(String contentType, int libraryId, int limit, int offset) {
         LazyList<AJEntityLibraryContent> libraryContents = AJEntityLibraryContent.findBySQL(
-            AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS_BY_CONTENTTYPE, libraryId, contentType, limit, offset);
+            AJEntityLibraryContent.SELECT_LIBRARY_CONTENTS_BY_CONTENTTYPE, libraryId, contentType, limit, offset);
 
         List<String> contentIds = new ArrayList<>(libraryContents.size());
         for (AJEntityLibraryContent content : libraryContents) {
@@ -98,28 +98,28 @@ public final class FetchContentDetailsHelper {
         JsonArray courseArray = new JsonArray();
         if (!courses.isEmpty()) {
             List<String> courseIdList = new ArrayList<>();
-            courses.stream().forEach(course -> courseIdList.add(course.getString(AJEntityCourse.ID)));
+            courses.forEach(course -> courseIdList.add(course.getString(AJEntityCourse.ID)));
 
             List<Map> unitCounts = Base.findAll(AJEntityCourse.SELECT_UNIT_COUNT_FOR_COURSES,
                 CommonUtils.toPostgresArrayString(courseIdList));
             Map<String, Integer> unitCountByCourse = new HashMap<>();
-            unitCounts.stream().forEach(map -> unitCountByCourse.put(map.get(AJEntityCourse.COURSE_ID).toString(),
+            unitCounts.forEach(map -> unitCountByCourse.put(map.get(AJEntityCourse.COURSE_ID).toString(),
                 Integer.valueOf(map.get(AJEntityCourse.UNIT_COUNT).toString())));
 
-            courses.stream().forEach(course -> {
+            courses.forEach(course -> {
                 Integer unitCount = unitCountByCourse.get(course.getString(AJEntityCourse.ID));
-                courseArray.add(new JsonObject(new JsonFormatterBuilder()
+                courseArray.add(new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityCourse.COURSE_LIST).toJson(course))
                         .put(AJEntityCourse.UNIT_COUNT, unitCount != null ? unitCount : 0));
             });
 
-            courses.stream().forEach(course -> ownerIdList.add(course.getString(AJEntityCourse.OWNER_ID)));
+            courses.forEach(course -> ownerIdList.add(course.getString(AJEntityCourse.OWNER_ID)));
         }
 
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_COURSES, courseArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
@@ -132,24 +132,24 @@ public final class FetchContentDetailsHelper {
         if (!collections.isEmpty()) {
             LOGGER.debug("# Collections found: {}", collections.size());
             List<String> collectionIdList = new ArrayList<>();
-            collections.stream()
+            collections
                 .forEach(collection -> collectionIdList.add(collection.getString(AJEntityCollection.ID)));
 
             List<Map> resourceCounts = Base.findAll(AJEntityCollection.SELECT_RESOURCES_COUNT_FOR_COLLECTION,
                 CommonUtils.toPostgresArrayString(collectionIdList));
             Map<String, Integer> resourceCountByCollection = new HashMap<>();
-            resourceCounts.stream()
+            resourceCounts
                 .forEach(map -> resourceCountByCollection.put(map.get(AJEntityCollection.COLLECTION_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.RESOURCE_COUNT).toString())));
-            LOGGER.debug("# of Collectios has resources: {}", resourceCountByCollection.size());
+            LOGGER.debug("# of Collections has resources: {}", resourceCountByCollection.size());
 
             List<Map> questionCounts = Base.findAll(AJEntityCollection.SELECT_QUESTIONS_COUNT_FOR_COLLECTION,
                 CommonUtils.toPostgresArrayString(collectionIdList));
             Map<String, Integer> questionCountByCollection = new HashMap<>();
-            questionCounts.stream()
+            questionCounts
                 .forEach(map -> questionCountByCollection.put(map.get(AJEntityCollection.COLLECTION_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.QUESTION_COUNT).toString())));
-            LOGGER.debug("# of Collectios has questions: {}", resourceCountByCollection.size());
+            LOGGER.debug("# of Collections has questions: {}", resourceCountByCollection.size());
 
             List<String> courseIdList = new ArrayList<>();
             collections.stream()
@@ -161,17 +161,17 @@ public final class FetchContentDetailsHelper {
             LazyList<AJEntityCourse> courseList = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_FOR_COLLECTION,
                 CommonUtils.toPostgresArrayString(courseIdList));
             Map<String, AJEntityCourse> courseMap = new HashMap<>();
-            courseList.stream().forEach(course -> courseMap.put(course.getString(AJEntityCourse.ID), course));
+            courseList.forEach(course -> courseMap.put(course.getString(AJEntityCourse.ID), course));
             LOGGER.debug("# Courses returned from database: {}", courseMap.size());
 
             collections.forEach(collection -> {
-                JsonObject result = new JsonObject(new JsonFormatterBuilder()
+                JsonObject result = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityCollection.COLLECTION_LIST).toJson(collection));
                 String courseId = collection.getString(AJEntityCollection.COURSE_ID);
                 if (courseId != null && !courseId.isEmpty()) {
                     AJEntityCourse course = courseMap.get(courseId);
                     result.put(CommonConstants.RESP_JSON_KEY_COURSE,
-                        new JsonObject(new JsonFormatterBuilder()
+                        new JsonObject(JsonFormatterBuilder
                             .buildSimpleJsonFormatter(false, AJEntityCourse.COURSE_FIELDS_FOR_COLLECTION)
                             .toJson(course)));
                 }
@@ -184,14 +184,14 @@ public final class FetchContentDetailsHelper {
                 collectionArray.add(result);
             });
 
-            collections.stream()
+            collections
                 .forEach(collection -> ownerIdList.add(collection.getString(AJEntityCollection.OWNER_ID)));
         }
 
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_COLLECTIONS, collectionArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
@@ -204,13 +204,13 @@ public final class FetchContentDetailsHelper {
         if (!assessments.isEmpty()) {
             LOGGER.debug("# Assessments found: {}", assessments.size());
             List<String> collectionIdList = new ArrayList<>();
-            assessments.stream()
+            assessments
                 .forEach(collection -> collectionIdList.add(collection.getString(AJEntityCollection.ID)));
 
             List<Map> questionCounts = Base.findAll(AJEntityCollection.SELECT_QUESTIONS_COUNT_FOR_COLLECTION,
                 CommonUtils.toPostgresArrayString(collectionIdList));
             Map<String, Integer> questionCountByCollection = new HashMap<>();
-            questionCounts.stream()
+            questionCounts
                 .forEach(map -> questionCountByCollection.put(map.get(AJEntityCollection.COLLECTION_ID).toString(),
                     Integer.valueOf(map.get(AJEntityCollection.QUESTION_COUNT).toString())));
             LOGGER.debug("# of assessments has questions: {}", questionCountByCollection.size());
@@ -225,17 +225,17 @@ public final class FetchContentDetailsHelper {
             LazyList<AJEntityCourse> courseList = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_FOR_COLLECTION,
                 CommonUtils.toPostgresArrayString(courseIdList));
             Map<String, AJEntityCourse> courseMap = new HashMap<>();
-            courseList.stream().forEach(course -> courseMap.put(course.getString(AJEntityCourse.ID), course));
+            courseList.forEach(course -> courseMap.put(course.getString(AJEntityCourse.ID), course));
             LOGGER.debug("# Courses returned from database: {}", courseMap.size());
 
             assessments.forEach(collection -> {
-                JsonObject result = new JsonObject(new JsonFormatterBuilder()
+                JsonObject result = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityCollection.ASSESSMENT_LIST).toJson(collection));
                 String courseId = collection.getString(AJEntityCollection.COURSE_ID);
                 if (courseId != null && !courseId.isEmpty()) {
                     AJEntityCourse course = courseMap.get(courseId);
                     result.put(CommonConstants.RESP_JSON_KEY_COURSE,
-                        new JsonObject(new JsonFormatterBuilder()
+                        new JsonObject(JsonFormatterBuilder
                             .buildSimpleJsonFormatter(false, AJEntityCourse.COURSE_FIELDS_FOR_COLLECTION)
                             .toJson(course)));
                 }
@@ -244,14 +244,14 @@ public final class FetchContentDetailsHelper {
                 collectionArray.add(result);
             });
 
-            assessments.stream()
+            assessments
                 .forEach(collection -> ownerIdList.add(collection.getString(AJEntityCollection.OWNER_ID)));
         }
 
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_ASSESSMENTS, collectionArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
@@ -262,14 +262,15 @@ public final class FetchContentDetailsHelper {
         JsonArray resourceArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!resourceList.isEmpty()) {
-            resourceList.stream()
+            resourceList
                 .forEach(resource -> ownerIdList.add(resource.getString(AJEntityOriginalResource.CREATOR_ID)));
             String strNull = null;
-            resourceList.stream().forEach(resource -> {
-                JsonObject resourceJson = new JsonObject(new JsonFormatterBuilder()
+            resourceList.forEach(resource -> {
+                JsonObject resourceJson = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityOriginalResource.RESOURCE_LIST).toJson(resource));
                 resourceJson.put(AJEntityOriginalResource.CONTENT_FORMAT,
                     AJEntityOriginalResource.RESOURCE_CONTENT_FORMAT);
+                // TODO: Validate if we need to pass NULL here in form of strNull
                 resourceJson.put(AJEntityOriginalResource.ORIGINAL_CREATOR_ID, strNull);
                 resourceArray.add(resourceJson);
             });
@@ -278,7 +279,7 @@ public final class FetchContentDetailsHelper {
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_RESOURCES, resourceArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
@@ -290,7 +291,7 @@ public final class FetchContentDetailsHelper {
         Set<String> ownerIdList = new HashSet<>();
         if (!questionList.isEmpty()) {
             List<String> creatorIdList = new ArrayList<>();
-            questionList.stream()
+            questionList
                 .forEach(question -> creatorIdList.add(question.getString(AJEntityContent.CREATOR_ID)));
 
             List<String> assessmentIdList = new ArrayList<>();
@@ -301,31 +302,31 @@ public final class FetchContentDetailsHelper {
             LazyList<AJEntityCollection> assessmentList = AJEntityCollection.findBySQL(
                 AJEntityCollection.SELECT_ASSESSMENT_FOR_QUESTION, CommonUtils.toPostgresArrayString(assessmentIdList));
             Map<String, AJEntityCollection> assessmentMap = new HashMap<>();
-            assessmentList.stream()
+            assessmentList
                 .forEach(assessment -> assessmentMap.put(assessment.getString(AJEntityCollection.ID), assessment));
             LOGGER.debug("assessment fetched from DB are {}", assessmentMap.size());
 
-            questionList.stream().forEach(question -> {
-                JsonObject result = new JsonObject(new JsonFormatterBuilder()
+            questionList.forEach(question -> {
+                JsonObject result = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityContent.QUESTION_LIST).toJson(question));
                 String assessmentId = question.getString(AJEntityContent.COLLECTION_ID);
                 if (assessmentId != null && !assessmentId.isEmpty()) {
                     AJEntityCollection assessment = assessmentMap.get(assessmentId);
                     result.put(CommonConstants.RESP_JSON_KEY_ASSESSMENT,
-                        new JsonObject(new JsonFormatterBuilder()
+                        new JsonObject(JsonFormatterBuilder
                             .buildSimpleJsonFormatter(false, AJEntityCollection.ASSESSMENT_FIELDS_FOR_QUESTION)
                             .toJson(assessment)));
                 }
                 questionArray.add(result);
             });
 
-            questionList.stream().forEach(question -> ownerIdList.add(question.getString(AJEntityContent.CREATOR_ID)));
+            questionList.forEach(question -> ownerIdList.add(question.getString(AJEntityContent.CREATOR_ID)));
         }
 
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_QUESTIONS, questionArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
@@ -336,10 +337,10 @@ public final class FetchContentDetailsHelper {
         JsonArray rubricArray = new JsonArray();
         Set<String> ownerIdList = new HashSet<>();
         if (!rubricList.isEmpty()) {
-            rubricList.stream().forEach(rubric -> ownerIdList.add(rubric.getString(AJEntityRubric.CREATOR_ID)));
+            rubricList.forEach(rubric -> ownerIdList.add(rubric.getString(AJEntityRubric.CREATOR_ID)));
 
-            rubricList.stream().forEach(rubric -> {
-                JsonObject result = new JsonObject(new JsonFormatterBuilder()
+            rubricList.forEach(rubric -> {
+                JsonObject result = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityRubric.RUBRIC_LIST).toJson(rubric));
                 rubricArray.add(result);
             });
@@ -348,14 +349,14 @@ public final class FetchContentDetailsHelper {
         JsonObject responseBody = new JsonObject();
         responseBody.put(CommonConstants.RESP_JSON_KEY_RUBRICS, rubricArray);
         responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
-            FetchUserDeatailsHelper.getOwnerDemographics(ownerIdList));
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
 
     private static JsonArray fetchAllContentDetails(int libraryId, int limit, int offset) {
         //TODO: How to order these results?
         LazyList<AJEntityLibraryContent> libraryContents = AJEntityLibraryContent
-            .findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONETNTS_ALL, libraryId, limit, offset);
+            .findBySQL(AJEntityLibraryContent.SELECT_LIBRARY_CONTENTS_ALL, libraryId, limit, offset);
 
         List<String> courseIds = new ArrayList<>();
         List<String> collectionIds = new ArrayList<>();

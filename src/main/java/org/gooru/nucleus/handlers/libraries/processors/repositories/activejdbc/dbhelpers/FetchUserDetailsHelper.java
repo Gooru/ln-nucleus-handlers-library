@@ -13,17 +13,16 @@ import io.vertx.core.json.JsonArray;
  * @author szgooru
  * Created On: 31-May-2017
  */
-public final class FetchUserDeatailsHelper {
+final class FetchUserDetailsHelper {
 
-    private FetchUserDeatailsHelper() {
+    private FetchUserDetailsHelper() {
         throw new AssertionError();
     }
-    
-    public static JsonArray getOwnerDemographics(Set<String> idlist) {
+
+    static JsonArray getOwnerDemographics(Set<String> idlist) {
         LazyList<AJEntityUsers> userDemographics = AJEntityUsers.findBySQL(
             AJEntityUsers.SELECT_MULTIPLE_BY_ID, CommonUtils.toPostgresArrayString(idlist));
-        JsonArray userDetailsArray = new JsonArray(new JsonFormatterBuilder()
+        return new JsonArray(JsonFormatterBuilder
             .buildSimpleJsonFormatter(false, AJEntityUsers.SUMMARY_FIELDS).toJson(userDemographics));
-        return userDetailsArray;
     }
 }

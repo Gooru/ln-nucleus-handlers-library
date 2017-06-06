@@ -13,7 +13,7 @@ import org.gooru.nucleus.handlers.libraries.processors.utils.VersionValidationUt
  */
 public abstract class AbstractCommandProcessor implements Processor {
 
-    protected List<String> deprecatedVersions = new ArrayList<>();
+    protected final List<String> deprecatedVersions = new ArrayList<>();
     protected final ProcessorContext context;
     protected String version;
 
