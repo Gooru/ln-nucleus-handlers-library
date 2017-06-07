@@ -264,14 +264,12 @@ public final class FetchContentDetailsHelper {
         if (!resourceList.isEmpty()) {
             resourceList
                 .forEach(resource -> ownerIdList.add(resource.getString(AJEntityOriginalResource.CREATOR_ID)));
-            String strNull = null;
             resourceList.forEach(resource -> {
                 JsonObject resourceJson = new JsonObject(JsonFormatterBuilder
                     .buildSimpleJsonFormatter(false, AJEntityOriginalResource.RESOURCE_LIST).toJson(resource));
                 resourceJson.put(AJEntityOriginalResource.CONTENT_FORMAT,
                     AJEntityOriginalResource.RESOURCE_CONTENT_FORMAT);
-                // TODO: Validate if we need to pass NULL here in form of strNull
-                resourceJson.put(AJEntityOriginalResource.ORIGINAL_CREATOR_ID, strNull);
+                resourceJson.putNull(AJEntityOriginalResource.ORIGINAL_CREATOR_ID);
                 resourceArray.add(resourceJson);
             });
         }
@@ -382,7 +380,6 @@ public final class FetchContentDetailsHelper {
             }
         }
 
-        JsonObject result = new JsonObject();
         JsonArray libraryContentsArray = new JsonArray();
         if (!courseIds.isEmpty()) {
             libraryContentsArray.add(fetchCoursesDetails(courseIds));

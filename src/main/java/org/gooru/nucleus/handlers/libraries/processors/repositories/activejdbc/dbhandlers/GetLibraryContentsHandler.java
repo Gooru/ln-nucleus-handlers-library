@@ -30,7 +30,6 @@ public class GetLibraryContentsHandler implements DBHandler {
     private String contentType;
     private int limit;
     private int offset;
-    private LazyList<AJEntityLibraryContent> libraryContents;
     private AJEntityLibrary library;
 
     public GetLibraryContentsHandler(ProcessorContext context) {
@@ -48,9 +47,14 @@ public class GetLibraryContentsHandler implements DBHandler {
         }
 
         this.contentType = CommonUtils.readRequestParam(CommonConstants.REQ_PARAM_CONTENT_TYPE, context);
-        if (this.contentType == null || !AJEntityLibraryContent.VALID_CONTENT_TYPES.contains(contentType)) {
-            LOGGER.warn("invalid content type provided, setting default");
+        if (this.contentType == null) {
+            LOGGER.debug("no content type provided, setting default");
             this.contentType = AJEntityLibraryContent.CONTENT_TYPE_COURSE;
+        } else if (!AJEntityLibraryContent.VALID_CONTENT_TYPES.contains(contentType)) {
+            LOGGER.warn("invalid content type provoded, aborting");
+            return new ExecutionResult<>(
+                MessageResponseFactory.createInvalidRequestResponse(MESSAGES.getString("invalid.content.type")),
+                ExecutionResult.ExecutionStatus.FAILED);
         }
 
         this.limit = CommonUtils.getLimitFromRequest(context);
@@ -108,7 +112,6 @@ public class GetLibraryContentsHandler implements DBHandler {
 
         response.mergeIn(FetchContentDetailsHelper.fetchContentDetails(this.contentType,
             this.library.getInteger(AJEntityLibrary.ID), this.limit, this.offset));
-        //response.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, libraryContentsJson);
         response.put(CommonConstants.RESP_JSON_KEY_FILTERS, getFiltersJson());
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);

@@ -27,7 +27,7 @@ public class AJEntityLibraryContent extends Model {
     public static final String CONTENT_TYPE_RUBRIC = "rubric";
 
     public static final List<String> VALID_CONTENT_TYPES = Arrays.asList(CONTENT_TYPE_COURSE, CONTENT_TYPE_COLLECTION,
-        CONTENT_TYPE_ASSESSMENT, CONTENT_TYPE_RESOURCE, CONTENT_TYPE_QUESTION, CONTENT_TYPE_RUBRIC, CONTENT_TYPE_ALL);
+        CONTENT_TYPE_ASSESSMENT, CONTENT_TYPE_RESOURCE, CONTENT_TYPE_QUESTION, CONTENT_TYPE_RUBRIC);
 
     public static final String SELECT_LIBRARY_CONTENTS_ALL =
         "SELECT id, content_id, content_type, sequence_id FROM library_content WHERE library_id = ? LIMIT ? OFFSET ?";
