@@ -18,4 +18,8 @@ public final class DBHandlerBuilder {
     public static DBHandler buildGetLibraryContentsHandler(ProcessorContext context) {
         return new GetLibraryContentsHandler(context);
     }
+
+    public static DBHandler buildGetLibraryHandler(ProcessorContext context) {
+        return new GetLibraryHandler(context);
+    }
 }

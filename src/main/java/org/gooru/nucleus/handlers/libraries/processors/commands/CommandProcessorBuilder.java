@@ -31,6 +31,12 @@ public enum CommandProcessorBuilder {
             };
         }
     },
+    LIBRARY_GET(MessageConstants.MSG_OP_LIBRARY_GET) {
+        @Override
+        public Processor build(ProcessorContext context) {
+            return new LibraryGetProcessor(context);
+        }
+    },
     LIBRARIES_GET(MessageConstants.MSG_OP_LIBRARIES_GET) {
         @Override
         public Processor build(ProcessorContext context) {

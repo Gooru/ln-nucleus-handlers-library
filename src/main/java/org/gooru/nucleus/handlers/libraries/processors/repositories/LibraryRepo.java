@@ -7,5 +7,7 @@ import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponse
  */
 public interface LibraryRepo {
 
+    MessageResponse getLibrary();
+    
     MessageResponse getLibraries();
 }

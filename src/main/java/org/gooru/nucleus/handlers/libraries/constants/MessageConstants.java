@@ -26,6 +26,7 @@ public final class MessageConstants {
     public static final String RESP_CONTAINER_MBUS = "mb.container";
     public static final String RESP_CONTAINER_EVENT = "mb.event";
 
+    public static final String MSG_OP_LIBRARY_GET = "library.get";
     public static final String MSG_OP_LIBRARIES_GET = "libraries.get";
     public static final String MSG_OP_LIBRARY_CONTENTS_GET = "library.contents.get";
     
