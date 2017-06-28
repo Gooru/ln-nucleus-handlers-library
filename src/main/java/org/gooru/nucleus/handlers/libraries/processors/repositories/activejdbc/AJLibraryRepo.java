@@ -22,4 +22,9 @@ public class AJLibraryRepo implements LibraryRepo {
         return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetLibrariesHandler(context));
     }
 
+    @Override
+    public MessageResponse getLibrary() {
+        return TransactionExecutor.executeTransaction(DBHandlerBuilder.buildGetLibraryHandler(context));
+    }
+
 }
