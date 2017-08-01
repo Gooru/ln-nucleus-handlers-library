@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * @author szgooru Created On: 28-Jun-2017
  */
 public final class LibraryHelper {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LibraryHelper.class);
 
     private LibraryHelper() {
@@ -18,12 +18,12 @@ public final class LibraryHelper {
 
     public static AJEntityLibrary getLibrary(String libraryId) {
         // If library id is convertible in int then lookup for the library by id
-        // and name. There is possibility that library name could be the number
-        // If library id is not convertible in int then only look for the
-        // library by name.
+        // and short name. There is possibility that library short name could be
+        // the number. If library id is not convertible in int then only look
+        // for the library by short name.
 
-        // TODO: Need to handle the situation where id and name could be same
-        // for two different libraries
+        // TODO: Need to handle the situation where id and short name could be
+        // same for two different libraries
         boolean isIntConvertible = false;
         int intLibraryId = 0;
         try {
@@ -35,11 +35,12 @@ public final class LibraryHelper {
 
         LazyList<AJEntityLibrary> libraries = null;
         if (isIntConvertible) {
-            LOGGER.debug("getting library by id or name");
-            libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_NAME, intLibraryId, libraryId);
+            LOGGER.debug("getting library by id or short name");
+            libraries =
+                AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_SHORTNAME, intLibraryId, libraryId);
         } else {
-            LOGGER.debug("getting library by name");
-            libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_NAME, libraryId);
+            LOGGER.debug("getting library by short name");
+            libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, libraryId);
         }
 
         if (libraries.isEmpty()) {

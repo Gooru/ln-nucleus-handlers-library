@@ -10,7 +10,6 @@ import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.f
 import org.gooru.nucleus.handlers.libraries.processors.responses.ExecutionResult;
 import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponse;
 import org.gooru.nucleus.handlers.libraries.processors.responses.MessageResponseFactory;
-import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
