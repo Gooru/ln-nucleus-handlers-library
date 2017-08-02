@@ -14,6 +14,8 @@ public final class AppConfiguration implements Initializer {
     private static final String APP_CONFIG_KEY = "app.configuration";
     private static final String MAX_PAGESIZE_KEY = "max.pagesize";
     private static final String DEFAULT_PAGESIZE_KEY = "default.pagesize";
+    private static final String DEFAULT_LIBRARY_LOOKUP = "default.library.lookup";
+    
     private final JsonObject configuration = new JsonObject();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfiguration.class);
@@ -48,6 +50,10 @@ public final class AppConfiguration implements Initializer {
 
     public Integer getDefaultPagesize() {
         return configuration.getJsonObject(KEY).getInteger(DEFAULT_PAGESIZE_KEY);
+    }
+    
+    public String getDefaultLibraryLookup() {
+        return configuration.getJsonObject(KEY).getString(DEFAULT_LIBRARY_LOOKUP);
     }
 
     private static final class Holder {
