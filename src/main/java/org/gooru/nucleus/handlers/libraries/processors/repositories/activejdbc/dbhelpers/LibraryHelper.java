@@ -40,9 +40,19 @@ public final class LibraryHelper {
             return getLibraryByShortname(libraryId);
         }
 
+        return getLibraryByShortNameOrId(libraryId, intLibraryId);
+    }
+
+    private static AJEntityLibrary getLibraryByShortname(String shortName) {
+        LazyList<AJEntityLibrary> libraries =
+            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, shortName);
+        return libraries.isEmpty() ? null : libraries.get(0);
+    }
+
+    private static AJEntityLibrary getLibraryByShortNameOrId(String shortName, int intLibraryId) {
         LOGGER.debug("getting library by id or short name");
         LazyList<AJEntityLibrary> libraries =
-            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_SHORTNAME, intLibraryId, libraryId);
+            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_SHORTNAME, intLibraryId, shortName);
         if (libraries.isEmpty()) {
             return null;
         }
@@ -51,15 +61,13 @@ public final class LibraryHelper {
             return libraries.get(0);
         }
 
-        LOGGER.warn("library id and shortname are clashing for:{}", libraryId);
+        LOGGER.warn("library id and shortname are clashing for:{}", shortName);
         AppConfiguration appConfig = AppConfiguration.getInstance();
-        String defaultLookup = appConfig.getDefaultLibraryLookup() != null ? appConfig.getDefaultLibraryLookup()
-            : CommonConstants.DEFAULT_LIBRARY_LOOKUP_SHORTNAME;
 
         AJEntityLibrary library = libraries.get(0);
-        if (defaultLookup.equalsIgnoreCase(CommonConstants.DEFAULT_LIBRARY_LOOKUP_SHORTNAME)) {
-            String shortName = library.getString(AJEntityLibrary.SHORT_NAME);
-            if (shortName.equalsIgnoreCase(libraryId)) {
+        if (appConfig.getDefaultLibraryLookup().equalsIgnoreCase(CommonConstants.DEFAULT_LIBRARY_LOOKUP_SHORTNAME)) {
+            String libShortName = library.getString(AJEntityLibrary.SHORT_NAME);
+            if (libShortName.equalsIgnoreCase(shortName)) {
                 LOGGER.debug("short name matched, returning");
                 return library;
             }
@@ -70,12 +78,10 @@ public final class LibraryHelper {
             }
         }
 
+        // This is not a default return. This return is in case above if
+        // conditions (comparing shortName or id)
+        // inside if-else block does not match. Above check is on get(0) item
+        // and if it's not matched then return get(1)
         return libraries.get(1);
-    }
-
-    private static AJEntityLibrary getLibraryByShortname(String shortName) {
-        LazyList<AJEntityLibrary> libraries =
-            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, shortName);
-        return libraries.isEmpty() ? null : libraries.get(0);
     }
 }
