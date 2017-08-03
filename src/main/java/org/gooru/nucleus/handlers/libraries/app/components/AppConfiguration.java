@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.libraries.app.components;
 
 import org.gooru.nucleus.handlers.libraries.bootstrap.startup.Initializer;
+import org.gooru.nucleus.handlers.libraries.constants.CommonConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,8 @@ public final class AppConfiguration implements Initializer {
     private static final String APP_CONFIG_KEY = "app.configuration";
     private static final String MAX_PAGESIZE_KEY = "max.pagesize";
     private static final String DEFAULT_PAGESIZE_KEY = "default.pagesize";
+    private static final String DEFAULT_LIBRARY_LOOKUP = "default.library.lookup";
+
     private final JsonObject configuration = new JsonObject();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfiguration.class);
@@ -48,6 +51,11 @@ public final class AppConfiguration implements Initializer {
 
     public Integer getDefaultPagesize() {
         return configuration.getJsonObject(KEY).getInteger(DEFAULT_PAGESIZE_KEY);
+    }
+
+    public String getDefaultLibraryLookup() {
+        String defaultLookup = configuration.getJsonObject(KEY).getString(DEFAULT_LIBRARY_LOOKUP);
+        return defaultLookup != null ? defaultLookup : CommonConstants.DEFAULT_LIBRARY_LOOKUP_SHORTNAME;
     }
 
     private static final class Holder {

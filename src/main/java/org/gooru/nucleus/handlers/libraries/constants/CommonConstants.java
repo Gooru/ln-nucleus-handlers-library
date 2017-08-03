@@ -24,6 +24,8 @@ public final class CommonConstants {
     public static final String RESP_JSON_KEY_OWNER_DETAILS = "owner_details";
     public static final String RESP_JSON_KEY_FILTERS = "filters";
     
+    public static final String DEFAULT_LIBRARY_LOOKUP_SHORTNAME = "shortname";
+    
     public static final int DEFAULT_OFFSET = 0;
     
     private CommonConstants() {

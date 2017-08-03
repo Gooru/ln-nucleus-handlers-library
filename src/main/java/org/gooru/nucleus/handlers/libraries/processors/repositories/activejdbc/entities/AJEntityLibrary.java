@@ -14,6 +14,7 @@ public class AJEntityLibrary extends Model {
 
     public static final String ID = "id";
     public static final String NAME = "name";
+    public static final String SHORT_NAME = "short_name";
     public static final String DESCRIPTION = "description";
     public static final String THUMBNAIL = "thumbnail";
     public static final String TENANT = "tenant";
@@ -30,20 +31,20 @@ public class AJEntityLibrary extends Model {
     public static final String RESP_KEY_LIBRARIES = "libraries";
 
     public static final String SELECT_LIBRARIES_BY_TENANTS =
-        "SELECT id, name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
+        "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
             + " question_count, rubric_count, sequence_id, taxonomy FROM library where tenant = ANY(?::uuid[]) order by tenant, sequence_id";
 
-    public static final String SELECT_LIBRARIES_BY_ID_NAME =
-        "SELECT id, name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
-        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE id = ? OR name = ?";
+    public static final String SELECT_LIBRARIES_BY_ID_SHORTNAME =
+        "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
+        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE id = ? OR short_name = ?";
 
-    public static final String SELECT_LIBRARIES_BY_NAME =
-        "SELECT id, name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
-        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE name = ?";
+    public static final String SELECT_LIBRARIES_BY_SHORTNAME =
+        "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
+        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE short_name = ?";
 
     public static final List<String> LIBRARIES_FIELDS =
-        Arrays.asList(ID, NAME, DESCRIPTION, THUMBNAIL, TENANT, TENANT_ROOT, COURSE_COUNT, ASSESSMENT_COUNT,
+        Arrays.asList(ID, NAME, SHORT_NAME, DESCRIPTION, THUMBNAIL, TENANT, TENANT_ROOT, COURSE_COUNT, ASSESSMENT_COUNT,
             COLLECTION_COUNT, RESOURCE_COUNT, QUESTION_COUNT, RUBRIC_COUNT, SEQUENCE_ID, TAXONOMY);
 
-    public static final List<String> LIBRARY_SUMMARY_FIELDS = Arrays.asList(ID, NAME, DESCRIPTION, THUMBNAIL);
+    public static final List<String> LIBRARY_SUMMARY_FIELDS = Arrays.asList(ID, NAME, SHORT_NAME, DESCRIPTION, THUMBNAIL);
 }
