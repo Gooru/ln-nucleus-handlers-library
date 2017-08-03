@@ -40,12 +40,12 @@ public final class LibraryHelper {
             return getLibraryByShortname(libraryId);
         }
 
-        return getLibraryByShortNameOrId(libraryId, intLibraryId);
+        return getLibraryByShortNameOrId(libraryId.toLowerCase(), intLibraryId);
     }
 
     private static AJEntityLibrary getLibraryByShortname(String shortName) {
         LazyList<AJEntityLibrary> libraries =
-            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, shortName);
+            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, shortName.toLowerCase());
         return libraries.isEmpty() ? null : libraries.get(0);
     }
 
