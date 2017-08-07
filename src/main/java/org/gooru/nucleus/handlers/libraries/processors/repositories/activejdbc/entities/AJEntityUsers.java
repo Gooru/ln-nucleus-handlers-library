@@ -24,7 +24,7 @@ public class AJEntityUsers extends Model {
     private static final String COUNTRY = "country";
 
     public static final String SELECT_MULTIPLE_BY_ID =
-        "SELECT id, username, first_name, last_name, thumbnail, school_district_id, school_district, country, "
+        "SELECT id, display_name as username, first_name, last_name, thumbnail, school_district_id, school_district, country, "
             + "country_id  FROM users WHERE id = ANY (?::uuid[])";
     
     public static final List<String> SUMMARY_FIELDS = Arrays
