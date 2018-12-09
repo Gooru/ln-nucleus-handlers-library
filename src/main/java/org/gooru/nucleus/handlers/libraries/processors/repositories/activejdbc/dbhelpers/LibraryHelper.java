@@ -1,11 +1,17 @@
 package org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.dbhelpers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.gooru.nucleus.handlers.libraries.app.components.AppConfiguration;
 import org.gooru.nucleus.handlers.libraries.constants.CommonConstants;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.entities.AJEntityLibrary;
+import org.gooru.nucleus.handlers.libraries.processors.utils.CommonUtils;
 import org.javalite.activejdbc.LazyList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.vertx.core.json.JsonArray;
 
 /**
  * @author szgooru Created On: 28-Jun-2017
@@ -18,7 +24,7 @@ public final class LibraryHelper {
         throw new AssertionError();
     }
 
-    public static AJEntityLibrary getLibrary(String libraryId) {
+    public static AJEntityLibrary getLibrary(String libraryId, JsonArray languagePreference) {
         // If library id is convertible in int then lookup for the library by id
         // and short name. There is possibility that library short name could be
         // the number. If library id is not convertible in int then only look
@@ -37,22 +43,43 @@ public final class LibraryHelper {
 
         if (!isIntConvertible) {
             LOGGER.debug("library id is not convertible to int so getting library by short name");
-            return getLibraryByShortname(libraryId);
+            return getLibraryByShortname(libraryId, languagePreference);
         }
 
-        return getLibraryByShortNameOrId(libraryId.toLowerCase(), intLibraryId);
+        return getLibraryByShortNameOrId(libraryId.toLowerCase(), intLibraryId, languagePreference);
     }
 
-    private static AJEntityLibrary getLibraryByShortname(String shortName) {
+    private static AJEntityLibrary getLibraryByShortname(String shortName, JsonArray languagePreference) {
+        StringBuilder query = new StringBuilder(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME);
+        
+        List<String> params = new ArrayList<>();
+        params.add(shortName.toLowerCase());
+        // Add language filter if user has set preference
+        if (languagePreference != null && !languagePreference.isEmpty()) {
+            query.append(AJEntityLibrary.LANGUAGE_FILTER);
+            params.add(CommonUtils.toPostgresIntegerArray(languagePreference.getList()));
+        }
+        
         LazyList<AJEntityLibrary> libraries =
-            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_SHORTNAME, shortName.toLowerCase());
+            AJEntityLibrary.findBySQL(query.toString(), params.toArray());
         return libraries.isEmpty() ? null : libraries.get(0);
     }
 
-    private static AJEntityLibrary getLibraryByShortNameOrId(String shortName, int intLibraryId) {
+    private static AJEntityLibrary getLibraryByShortNameOrId(String shortName, int intLibraryId, JsonArray languagePreference) {
         LOGGER.debug("getting library by id or short name");
+        StringBuilder query = new StringBuilder(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_SHORTNAME);
+        
+        List<Object> params = new ArrayList<>();
+        params.add(intLibraryId);
+        params.add(shortName);
+        // Add language filter if user has set preference
+        if (languagePreference != null && !languagePreference.isEmpty()) {
+            query.append(AJEntityLibrary.LANGUAGE_FILTER);
+            params.add(CommonUtils.toPostgresIntegerArray(languagePreference.getList()));
+        }
+        
         LazyList<AJEntityLibrary> libraries =
-            AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_ID_SHORTNAME, intLibraryId, shortName);
+            AJEntityLibrary.findBySQL(query.toString(), params.toArray());
         if (libraries.isEmpty()) {
             return null;
         }

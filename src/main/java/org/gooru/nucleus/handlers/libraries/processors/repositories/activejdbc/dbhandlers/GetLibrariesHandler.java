@@ -2,7 +2,9 @@ package org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
+import org.gooru.nucleus.handlers.libraries.constants.CommonConstants;
 import org.gooru.nucleus.handlers.libraries.constants.MessageConstants;
 import org.gooru.nucleus.handlers.libraries.processors.ProcessorContext;
 import org.gooru.nucleus.handlers.libraries.processors.repositories.activejdbc.entities.AJEntityLibrary;
@@ -25,6 +27,7 @@ import io.vertx.core.json.JsonObject;
 class GetLibrariesHandler implements DBHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GetLibrariesHandler.class);
+    private static final ResourceBundle MESSAGES = ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
 
     private final ProcessorContext context;
     private boolean isAnonymous = false;
@@ -65,10 +68,20 @@ class GetLibrariesHandler implements DBHandler {
             tenantList.add(context.tenant());
         }
 
-        // Get libraries for all tenants from above list
-        this.libraries = AJEntityLibrary.findBySQL(AJEntityLibrary.SELECT_LIBRARIES_BY_TENANTS,
-            CommonUtils.toPostgresArrayString(tenantList));
-
+        // Get libraries for all tenants from above list in user preferred language sequence
+        StringBuilder query = new StringBuilder(AJEntityLibrary.SELECT_LIBRARIES_BY_TENANTS);
+        
+        List<String> params = new ArrayList<>();
+        params.add(CommonUtils.toPostgresArrayString(tenantList));
+        // Add language filter if user has set preference
+        if (context.languagePreference() != null && !context.languagePreference().isEmpty()) {
+            query.append(AJEntityLibrary.LANGUAGE_FILTER);
+            params.add(CommonUtils.toPostgresIntegerArray(context.languagePreference().getList()));
+        }
+        query.append(AJEntityLibrary.ORDER_BY_TENANT_AND_SEQUENCE);
+        
+        this.libraries = AJEntityLibrary.findBySQL(query.toString(), params.toArray());
+        
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
@@ -77,7 +90,6 @@ class GetLibrariesHandler implements DBHandler {
     public ExecutionResult<MessageResponse> executeRequest() {
         JsonArray librariesArray = new JsonArray(JsonFormatterBuilder
             .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARIES_FIELDS).toJson(this.libraries));
-
         JsonObject response = new JsonObject();
         response.put(AJEntityLibrary.RESP_KEY_LIBRARIES, librariesArray);
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),

@@ -1,6 +1,7 @@
 package org.gooru.nucleus.handlers.libraries.processors;
 
 import io.vertx.core.MultiMap;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -13,6 +14,7 @@ public final class ProcessorContext {
     private final String libraryId;
     private final MultiMap requestHeaders;
     private final TenantContext tenantContext;
+    private final PreferenceContext preferenceContext;
 
     private ProcessorContext(String userId, JsonObject session, JsonObject request, String libraryId, MultiMap headers) {
         if (session == null || userId == null || session.isEmpty() || headers == null || headers.isEmpty()) {
@@ -25,6 +27,7 @@ public final class ProcessorContext {
         this.libraryId = libraryId;
         this.requestHeaders = headers;
         this.tenantContext = new TenantContext(session);
+        this.preferenceContext = new PreferenceContext(session);
     }
 
     public String userId() {
@@ -53,6 +56,14 @@ public final class ProcessorContext {
 
     public String tenantRoot() {
         return this.tenantContext.tenantRoot();
+    }
+    
+    public JsonObject standardPreference() {
+        return this.preferenceContext.standardPreference();
+    }
+
+    public JsonArray languagePreference() {
+        return this.preferenceContext.languagePreference();
     }
 
     public static class ProcessorContextBuilder {
@@ -110,6 +121,32 @@ public final class ProcessorContext {
 
         public String tenantRoot() {
             return this.tenantRoot;
+        }
+    }
+    
+    private static class PreferenceContext {
+        private static final String PREFERENCE_SETTINGS = "preference_settings";
+        private static final String STANDARD_PREFERENCE = "standard_preference";
+        private static final String LANGUAGE_PREFERENCE = "language_preference";
+
+        private final JsonObject standardPreference;
+        private final JsonArray languagePreference;
+
+        PreferenceContext(JsonObject session) {
+            JsonObject preferenceJson = session.getJsonObject(PREFERENCE_SETTINGS);
+            if (preferenceJson == null || preferenceJson.isEmpty()) {
+                throw new IllegalStateException("Preference Context invalid");
+            }
+            this.standardPreference = preferenceJson.getJsonObject(STANDARD_PREFERENCE);
+            this.languagePreference = preferenceJson.getJsonArray(LANGUAGE_PREFERENCE);
+        }
+
+        public JsonObject standardPreference() {
+            return this.standardPreference;
+        }
+
+        public JsonArray languagePreference() {
+            return this.languagePreference;
         }
     }
 }
