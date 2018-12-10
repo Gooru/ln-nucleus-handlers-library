@@ -36,7 +36,7 @@ public class AJEntityLibrary extends Model {
 
     public static final String SELECT_LIBRARIES_BY_ID_SHORTNAME =
         "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
-        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE id = ? OR lower(short_name) = ?";
+        + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE (id = ? OR lower(short_name) = ?)";
 
     public static final String SELECT_LIBRARIES_BY_SHORTNAME =
         "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
