@@ -68,4 +68,24 @@ public final class CommonUtils {
         String value = requestParams.getString(0);
         return (value != null && !value.isEmpty()) ? value : null;
     }
+    
+    public static String toPostgresIntegerArray(Collection<?> input) {
+        int approxSize = ((input.size() + 1) * 36); // Length of UUID is around 36 chars
+        
+        Iterator<?> it = input.iterator();
+        if (!it.hasNext()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder(approxSize);
+        sb.append('{');
+        for (;;) {
+            Integer s = Integer.parseInt(it.next().toString());
+            sb.append(s);
+            if (!it.hasNext()) {
+                return sb.append('}').toString();
+            }
+            sb.append(',');
+        }
+    }
 }

@@ -32,7 +32,7 @@ public class AJEntityLibrary extends Model {
 
     public static final String SELECT_LIBRARIES_BY_TENANTS =
         "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
-            + " question_count, rubric_count, sequence_id, taxonomy FROM library where tenant = ANY(?::uuid[]) order by tenant, sequence_id";
+            + " question_count, rubric_count, sequence_id, taxonomy FROM library where tenant = ANY(?::uuid[])";
 
     public static final String SELECT_LIBRARIES_BY_ID_SHORTNAME =
         "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
@@ -41,7 +41,11 @@ public class AJEntityLibrary extends Model {
     public static final String SELECT_LIBRARIES_BY_SHORTNAME =
         "SELECT id, name, short_name, description, thumbnail, tenant, tenant_root, course_count, assessment_count, collection_count, resource_count,"
         + " question_count, rubric_count, sequence_id, taxonomy FROM library WHERE lower(short_name) = ?";
+    
+    public static final String ORDER_BY_TENANT_AND_SEQUENCE = " order by tenant, sequence_id";
 
+    public static final String LANGUAGE_FILTER = " and primary_language = ANY(?::integer[])";
+                            
     public static final List<String> LIBRARIES_FIELDS =
         Arrays.asList(ID, NAME, SHORT_NAME, DESCRIPTION, THUMBNAIL, TENANT, TENANT_ROOT, COURSE_COUNT, ASSESSMENT_COUNT,
             COLLECTION_COUNT, RESOURCE_COUNT, QUESTION_COUNT, RUBRIC_COUNT, SEQUENCE_ID, TAXONOMY);
