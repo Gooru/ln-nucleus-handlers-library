@@ -47,7 +47,7 @@ public class GetLibraryHandler implements DBHandler {
     @Override
     public ExecutionResult<MessageResponse> validateRequest() {
 
-        this.library = LibraryHelper.getLibrary(context.libraryId());
+        this.library = LibraryHelper.getLibrary(context.libraryId(), context.languagePreference());
         if (this.library == null) {
             LOGGER.warn("library not found for id '{}'", context.libraryId());
             return new ExecutionResult<>(MessageResponseFactory.createNotFoundResponse(MESSAGES.getString("not.found")),
