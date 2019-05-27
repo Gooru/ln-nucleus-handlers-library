@@ -25,10 +25,15 @@ public class AJEntityCollection extends Model {
     public static final String LEARNING_OBJECTIVE = "learning_objective";
     public static final String OWNER_ID = "owner_id";
     public static final String ORIGINAL_CREATOR_ID = "original_creator_id";
-
+    private static final String MAX_SCORE = "max_score";
+    private static final String DURATION_HOURS = "duration_hours";
+    private static final String REFERENCE = "reference";
+    private static final String EXEMPLAR = "exemplar";
+    public static final String OA_ID = "oa_id";
     public static final String COLLECTION_ID = "collection_id";
     public static final String RESOURCE_COUNT = "resource_count";
     public static final String QUESTION_COUNT = "question_count";
+    public static final String TASK_COUNT = "task_count";
     public static final String COURSE_TITLE = "course_title";
 
     public static final String SELECT_COLLECTIONS =
@@ -51,12 +56,24 @@ public class AJEntityCollection extends Model {
     
     public static final String SELECT_ASSESSMENT_FOR_QUESTION =
         "SELECT id, title, visible_on_profile, format FROM collection WHERE id = ANY (?::uuid[]) AND is_deleted = false";
+    
+    public static final String SELECT_OFFLINE_ACTIVITIES =
+        "SELECT id, title, course_id, publish_status, thumbnail, taxonomy, collaborator, visible_on_profile, learning_objective, owner_id,"
+            + " original_creator_id, taxonomy_to_build, reference, duration_hours, max_score, exemplar FROM collection WHERE id = ANY(?::uuid[]) "
+            + "AND format = 'offline-activity'::content_container_type AND is_deleted = false ORDER BY updated_at DESC";
 
+    public static final String SELECT_TASK_COUNT_FOR_OFFLINE_ACTIVITIES =
+        "SELECT count(id) as task_count, oa_id FROM oa_tasks WHERE oa_id = ANY (?::uuid[]) GROUP BY oa_id";
+    
+    
     public static final List<String> COLLECTION_LIST = Arrays.asList(ID, TITLE, COURSE_ID, PUBLISH_STATUS, THUMBNAIL,
         TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, LEARNING_OBJECTIVE, OWNER_ID, ORIGINAL_CREATOR_ID);
     
     public static final List<String> ASSESSMENT_LIST = Arrays.asList(ID, TITLE, COURSE_ID, PUBLISH_STATUS, THUMBNAIL,
         TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, LEARNING_OBJECTIVE, OWNER_ID, ORIGINAL_CREATOR_ID);
+    
+    public static final List<String> OFFLINE_ACTIVITY_LIST = Arrays.asList(ID, TITLE, COURSE_ID, PUBLISH_STATUS, THUMBNAIL,
+        TAXONOMY, COLLABORATOR, VISIBLE_ON_PROFILE, LEARNING_OBJECTIVE, OWNER_ID, ORIGINAL_CREATOR_ID, MAX_SCORE, DURATION_HOURS, REFERENCE, EXEMPLAR);
     
     public static final List<String> ASSESSMENT_FIELDS_FOR_QUESTION = Arrays.asList(ID, TITLE, VISIBLE_ON_PROFILE, FORMAT);
 }

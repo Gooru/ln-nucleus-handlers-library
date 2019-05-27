@@ -21,6 +21,7 @@ public final class CommonConstants {
     public static final String RESP_JSON_KEY_RESOURCES = "resources";
     public static final String RESP_JSON_KEY_QUESTIONS = "questions";
     public static final String RESP_JSON_KEY_RUBRICS = "rubrics";
+    public static final String RESP_JSON_KEY_OFFLINE_ACTIVITIES = "offline_activities";
     public static final String RESP_JSON_KEY_OWNER_DETAILS = "owner_details";
     public static final String RESP_JSON_KEY_FILTERS = "filters";
     

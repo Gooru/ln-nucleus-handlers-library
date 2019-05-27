@@ -68,6 +68,11 @@ public final class FetchContentDetailsHelper {
                 getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC, libraryId, limit, offset);
             libraryContents = fetchRubricsDetails(rubricIds);
             break;
+        case AJEntityLibraryContent.CONTENT_TYPE_OFFLINE_ACTIVITY:
+            List<String> offlineActivityIds =
+                getContentsForLibrary(AJEntityLibraryContent.CONTENT_TYPE_OFFLINE_ACTIVITY, libraryId, limit, offset);
+            libraryContents = fetchOfflineActivityDetails(offlineActivityIds);
+            break;
         case AJEntityLibraryContent.CONTENT_TYPE_ALL:
             JsonArray resultArray = fetchAllContentDetails(libraryId, limit, offset);
             libraryContents.put(CommonConstants.RESP_JSON_KEY_LIBRARY_CONTENTS, resultArray);
@@ -89,6 +94,7 @@ public final class FetchContentDetailsHelper {
         }
         return contentIds;
     }
+  
 
     private static JsonObject fetchCoursesDetails(List<String> courseIds) {
 
@@ -350,6 +356,67 @@ public final class FetchContentDetailsHelper {
             FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
         return responseBody;
     }
+    
+    private static JsonObject fetchOfflineActivityDetails(List<String> offlineActivityIds) {
+        LazyList<AJEntityCollection> offlineActivities =
+            AJEntityCollection.findBySQL(AJEntityCollection.SELECT_OFFLINE_ACTIVITIES, CommonUtils.toPostgresArrayString(offlineActivityIds));
+        JsonArray offlineActivitiesArray = new JsonArray();
+        Set<String> ownerIdList = new HashSet<>();
+        if (!offlineActivities.isEmpty()) {
+            LOGGER.debug("# Offline Activities found: {}", offlineActivities.size());
+            List<String> offlineActivityIdList = new ArrayList<>();
+            offlineActivities
+            .forEach(offlineActivity -> offlineActivityIdList.add(offlineActivity.getString(AJEntityCollection.ID)));
+            
+            List<Map> oaTaskCounts = Base.findAll(AJEntityCollection.SELECT_TASK_COUNT_FOR_OFFLINE_ACTIVITIES,
+                CommonUtils.toPostgresArrayString(offlineActivityIdList));
+            Map<String, Integer> taskCountByOfflineActivity = new HashMap<>();
+            oaTaskCounts
+                .forEach(map -> taskCountByOfflineActivity.put(map.get(AJEntityCollection.OA_ID).toString(),
+                    Integer.valueOf(map.get(AJEntityCollection.TASK_COUNT).toString())));
+            LOGGER.debug("# of Offline Activities has tasks: {}", taskCountByOfflineActivity.size());
+
+            List<String> courseIdList = new ArrayList<>();
+            
+            offlineActivities.stream()
+                .filter(collection -> collection.getString(AJEntityCollection.COURSE_ID) != null
+                    && !collection.getString(AJEntityCollection.COURSE_ID).isEmpty())
+                .forEach(collection -> courseIdList.add(collection.getString(AJEntityCollection.COURSE_ID)));
+            LOGGER.debug("# Courses are associated with offline Activities: {}", courseIdList.size());
+
+            LazyList<AJEntityCourse> courseList = AJEntityCourse.findBySQL(AJEntityCourse.SELECT_COURSE_FOR_COLLECTION,
+                CommonUtils.toPostgresArrayString(courseIdList));
+            Map<String, AJEntityCourse> courseMap = new HashMap<>();
+            courseList.forEach(course -> courseMap.put(course.getString(AJEntityCourse.ID), course));
+            LOGGER.debug("# Courses returned from database: {}", courseMap.size());
+
+            offlineActivities.forEach(offlineActivity -> {
+                ownerIdList.add(offlineActivity.getString(AJEntityCollection.OWNER_ID));
+                JsonObject result = new JsonObject(JsonFormatterBuilder
+                    .buildSimpleJsonFormatter(false, AJEntityCollection.OFFLINE_ACTIVITY_LIST).toJson(offlineActivity));
+                String courseId = offlineActivity.getString(AJEntityCollection.COURSE_ID);
+                if (courseId != null && !courseId.isEmpty()) {
+                    AJEntityCourse course = courseMap.get(courseId);
+                    result.put(CommonConstants.RESP_JSON_KEY_COURSE,
+                        new JsonObject(JsonFormatterBuilder
+                            .buildSimpleJsonFormatter(false, AJEntityCourse.COURSE_FIELDS_FOR_COLLECTION)
+                            .toJson(course)));
+                }
+
+                String offlineActivityId = offlineActivity.getString(AJEntityCollection.ID);
+                Integer taskCount = taskCountByOfflineActivity.get(offlineActivityId);
+                result.put(AJEntityCollection.TASK_COUNT, taskCount != null ? taskCount : 0);
+                
+                offlineActivitiesArray.add(result);
+            });
+        }
+
+        JsonObject responseBody = new JsonObject();
+        responseBody.put(CommonConstants.RESP_JSON_KEY_OFFLINE_ACTIVITIES, offlineActivitiesArray);
+        responseBody.put(CommonConstants.RESP_JSON_KEY_OWNER_DETAILS,
+            FetchUserDetailsHelper.getOwnerDemographics(ownerIdList));
+        return responseBody;
+    }
 
     private static JsonArray fetchAllContentDetails(int libraryId, int limit, int offset) {
         //TODO: How to order these results?
@@ -362,6 +429,7 @@ public final class FetchContentDetailsHelper {
         List<String> resourceIds = new ArrayList<>();
         List<String> questionIds = new ArrayList<>();
         List<String> rubricIds = new ArrayList<>();
+        List<String> offlineActivityIds = new ArrayList<>();
 
         for (AJEntityLibraryContent content : libraryContents) {
             String contentId = content.getString(AJEntityLibraryContent.CONTENT_ID);
@@ -377,6 +445,8 @@ public final class FetchContentDetailsHelper {
                 questionIds.add(contentId);
             } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_RUBRIC)) {
                 rubricIds.add(contentId);
+            } else if (content.getContentType().equalsIgnoreCase(AJEntityLibraryContent.CONTENT_TYPE_OFFLINE_ACTIVITY)) {
+                offlineActivityIds.add(contentId);
             }
         }
 
@@ -403,6 +473,9 @@ public final class FetchContentDetailsHelper {
 
         if (!rubricIds.isEmpty()) {
             libraryContentsArray.add(fetchRubricsDetails(rubricIds));
+        }
+        if (!offlineActivityIds.isEmpty()) {
+            libraryContentsArray.add(fetchOfflineActivityDetails(offlineActivityIds));
         }
 
         return libraryContentsArray;
