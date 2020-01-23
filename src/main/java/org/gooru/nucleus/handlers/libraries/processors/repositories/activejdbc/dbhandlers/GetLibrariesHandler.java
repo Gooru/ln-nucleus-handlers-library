@@ -85,13 +85,29 @@ class GetLibrariesHandler implements DBHandler {
         LOGGER.debug("validateRequest() OK");
         return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
     }
+    
+    // sort the library list based on the tenant 
+    private JsonArray sortLibraryList(JsonArray librariesData) {
+    	JsonArray activeTenantLibraryList = new JsonArray();
+    	JsonArray otherTenantLibraryList = new JsonArray();
+        	for (Object library : librariesData) {
+		        if (context.tenant().equals(((JsonObject) library).getString(AJEntityLibrary.TENANT))) {
+		        	activeTenantLibraryList.add(library);
+		        } else {
+		            otherTenantLibraryList.add(library);
+		        }
+	        }
+    	activeTenantLibraryList.addAll(otherTenantLibraryList);   
+        return activeTenantLibraryList;
+    }
 
     @Override
     public ExecutionResult<MessageResponse> executeRequest() {
         JsonArray librariesArray = new JsonArray(JsonFormatterBuilder
             .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARIES_FIELDS).toJson(this.libraries));
         JsonObject response = new JsonObject();
-        response.put(AJEntityLibrary.RESP_KEY_LIBRARIES, librariesArray);
+        JsonArray sortedLibrariesArray = sortLibraryList(librariesArray);
+        response.put(AJEntityLibrary.RESP_KEY_LIBRARIES, sortedLibrariesArray);
         return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
             ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
