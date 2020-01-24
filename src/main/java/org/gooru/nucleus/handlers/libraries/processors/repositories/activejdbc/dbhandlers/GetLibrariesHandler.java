@@ -26,94 +26,95 @@ import io.vertx.core.json.JsonObject;
  */
 class GetLibrariesHandler implements DBHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GetLibrariesHandler.class);
-    private static final ResourceBundle MESSAGES = ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GetLibrariesHandler.class);
+  private static final ResourceBundle MESSAGES =
+      ResourceBundle.getBundle(CommonConstants.RESOURCE_BUNDLE);
 
-    private final ProcessorContext context;
-    private boolean isAnonymous = false;
-    private LazyList<AJEntityLibrary> libraries;
+  private final ProcessorContext context;
+  private boolean isAnonymous = false;
+  private LazyList<AJEntityLibrary> libraries;
 
-    GetLibrariesHandler(ProcessorContext context) {
-        this.context = context;
+  GetLibrariesHandler(ProcessorContext context) {
+    this.context = context;
+  }
+
+  @Override
+  public ExecutionResult<MessageResponse> checkSanity() {
+    if (this.context.userId() != null
+        && this.context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
+      isAnonymous = true;
     }
 
-    @Override
-    public ExecutionResult<MessageResponse> checkSanity() {
-        if (this.context.userId() != null
-            && this.context.userId().equalsIgnoreCase(MessageConstants.MSG_USER_ANONYMOUS)) {
-            isAnonymous = true;
-        }
+    LOGGER.debug("checkSanity() OK");
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
 
-        LOGGER.debug("checkSanity() OK");
-        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  @Override
+  public ExecutionResult<MessageResponse> validateRequest() {
+
+    // Get all global and discoverable tenants
+    LazyList<AJEntityTenant> tenants =
+        AJEntityTenant.findBySQL(AJEntityTenant.SELECT_GLOBAL_AND_DISCOVERABLE_TENANTS);
+    if (tenants.isEmpty()) {
+      LOGGER.debug("no global or discoverable tenant found");
+      return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(),
+          ExecutionResult.ExecutionStatus.SUCCESSFUL);
     }
 
-    @Override
-    public ExecutionResult<MessageResponse> validateRequest() {
+    List<String> tenantList = new ArrayList<>(tenants.size());
+    tenants.forEach(tenant -> tenantList.add(tenant.getString(AJEntityTenant.ID)));
 
-        // Get all global and discoverable tenants
-        LazyList<AJEntityTenant> tenants =
-            AJEntityTenant.findBySQL(AJEntityTenant.SELECT_GLOBAL_AND_DISCOVERABLE_TENANTS);
-        if (tenants.isEmpty()) {
-            LOGGER.debug("no global or discoverable tenant found");
-            return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(),
-                ExecutionResult.ExecutionStatus.SUCCESSFUL);
-        }
-
-        List<String> tenantList = new ArrayList<>(tenants.size());
-        tenants.forEach(tenant -> tenantList.add(tenant.getString(AJEntityTenant.ID)));
-
-        // If logged in user, add current tenant as well
-        if (!isAnonymous) {
-            tenantList.add(context.tenant());
-        }
-
-        // Get libraries for all tenants from above list in user preferred language sequence
-        StringBuilder query = new StringBuilder(AJEntityLibrary.SELECT_LIBRARIES_BY_TENANTS);
-        
-        List<String> params = new ArrayList<>();
-        params.add(CommonUtils.toPostgresArrayString(tenantList));
-        // Add language filter if user has set preference
-        if (context.languagePreference() != null && !context.languagePreference().isEmpty()) {
-            query.append(AJEntityLibrary.LANGUAGE_FILTER);
-            params.add(CommonUtils.toPostgresIntegerArray(context.languagePreference().getList()));
-        }
-        query.append(AJEntityLibrary.ORDER_BY_TENANT_AND_SEQUENCE);
-        
-        this.libraries = AJEntityLibrary.findBySQL(query.toString(), params.toArray());
-        
-        LOGGER.debug("validateRequest() OK");
-        return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
-    }
-    
-    // sort the library list based on the tenant 
-    private JsonArray sortLibraryList(JsonArray librariesData) {
-    	JsonArray activeTenantLibraryList = new JsonArray();
-    	JsonArray otherTenantLibraryList = new JsonArray();
-        	for (Object library : librariesData) {
-		        if (context.tenant().equals(((JsonObject) library).getString(AJEntityLibrary.TENANT))) {
-		        	activeTenantLibraryList.add(library);
-		        } else {
-		            otherTenantLibraryList.add(library);
-		        }
-	        }
-    	activeTenantLibraryList.addAll(otherTenantLibraryList);   
-        return activeTenantLibraryList;
+    // If logged in user, add current tenant as well
+    if (!isAnonymous) {
+      tenantList.add(context.tenant());
     }
 
-    @Override
-    public ExecutionResult<MessageResponse> executeRequest() {
-        JsonArray librariesArray = new JsonArray(JsonFormatterBuilder
-            .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARIES_FIELDS).toJson(this.libraries));
-        JsonObject response = new JsonObject();
-        JsonArray sortedLibrariesArray = sortLibraryList(librariesArray);
-        response.put(AJEntityLibrary.RESP_KEY_LIBRARIES, sortedLibrariesArray);
-        return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
-            ExecutionResult.ExecutionStatus.SUCCESSFUL);
-    }
+    // Get libraries for all tenants from above list in user preferred language sequence
+    StringBuilder query = new StringBuilder(AJEntityLibrary.SELECT_LIBRARIES_BY_TENANTS);
 
-    @Override
-    public boolean handlerReadOnly() {
-        return true;
+    List<String> params = new ArrayList<>();
+    params.add(CommonUtils.toPostgresArrayString(tenantList));
+    // Add language filter if user has set preference
+    if (context.languagePreference() != null && !context.languagePreference().isEmpty()) {
+      query.append(AJEntityLibrary.LANGUAGE_FILTER);
+      params.add(CommonUtils.toPostgresIntegerArray(context.languagePreference().getList()));
     }
+    query.append(AJEntityLibrary.ORDER_BY_TENANT_AND_SEQUENCE);
+
+    this.libraries = AJEntityLibrary.findBySQL(query.toString(), params.toArray());
+
+    LOGGER.debug("validateRequest() OK");
+    return new ExecutionResult<>(null, ExecutionResult.ExecutionStatus.CONTINUE_PROCESSING);
+  }
+
+  // sort the library list based on the tenant
+  private JsonArray sortLibraryList(JsonArray librariesData) {
+    JsonArray activeTenantLibraryList = new JsonArray();
+    JsonArray otherTenantLibraryList = new JsonArray();
+    librariesData.forEach(library -> {
+      if (context.tenant().equals(((JsonObject) library).getString(AJEntityLibrary.TENANT))) {
+        activeTenantLibraryList.add(library);
+      } else {
+        otherTenantLibraryList.add(library);
+      }
+    });
+    activeTenantLibraryList.addAll(otherTenantLibraryList);
+    return activeTenantLibraryList;
+  }
+
+  @Override
+  public ExecutionResult<MessageResponse> executeRequest() {
+    JsonArray librariesArray = new JsonArray(JsonFormatterBuilder
+        .buildSimpleJsonFormatter(false, AJEntityLibrary.LIBRARIES_FIELDS).toJson(this.libraries));
+    JsonObject response = new JsonObject();
+    JsonArray sortedLibrariesArray = sortLibraryList(librariesArray);
+    response.put(AJEntityLibrary.RESP_KEY_LIBRARIES, sortedLibrariesArray);
+    return new ExecutionResult<>(MessageResponseFactory.createOkayResponse(response),
+        ExecutionResult.ExecutionStatus.SUCCESSFUL);
+  }
+
+  @Override
+  public boolean handlerReadOnly() {
+    return true;
+  }
 }
